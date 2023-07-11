@@ -43,6 +43,7 @@ async function connect() {
   };
 
   const serverUrl = `http://${hostname}:${config.listenPort}`;
+  // const serverUrl = `http://34.81.234.72:8080`;
   socket = socketClient(serverUrl, opts);
   socket.request = socketPromise(socket);
 
@@ -90,6 +91,7 @@ async function loadDevice(routerRtpCapabilities) {
 }
 
 async function publish(e) {
+  console.log(`publish`);
   const isWebcam = e.target.id === "btn_webcam";
   $txtPublish = isWebcam ? $txtWebcam : $txtScreen;
 
@@ -97,11 +99,15 @@ async function publish(e) {
     forceTcp: false,
     rtpCapabilities: device.rtpCapabilities,
   });
+  console.log(`data`);
+  console.log(data);
   if (data.error) {
     console.error(data.error);
     return;
   }
 
+  console.log(`device`);
+  console.log(device);
   const transport = device.createSendTransport(data);
   transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
     socket
@@ -109,6 +115,9 @@ async function publish(e) {
       .then(callback)
       .catch(errback);
   });
+
+  console.log("transport");
+  console.log(transport);
 
   transport.on(
     "produce",
@@ -119,6 +128,7 @@ async function publish(e) {
           kind,
           rtpParameters,
         });
+        console.log(`id  ${id}`);
         callback({ id });
       } catch (err) {
         errback(err);
@@ -127,6 +137,7 @@ async function publish(e) {
   );
 
   transport.on("connectionstatechange", (state) => {
+    console.log(`state  ${state}`);
     switch (state) {
       case "connecting":
         $txtPublish.innerHTML = "publishing...";
@@ -169,6 +180,12 @@ async function publish(e) {
       };
     }
     producer = await transport.produce(params);
+    console.log(`producer`);
+    console.log(producer);
+    document.querySelector("#local_video").srcObject = stream;
+    $txtPublish.innerHTML = "published";
+    $fsPublish.disabled = true;
+    $fsSubscribe.disabled = false;
   } catch (err) {
     $txtPublish.innerHTML = "failed";
   }
@@ -189,10 +206,15 @@ async function getUserMedia(transport, isWebcam) {
     console.error("getUserMedia() failed:", err.message);
     throw err;
   }
+  console.log("navigator.mediaDevices");
+  console.log(navigator.mediaDevices);
+  console.log("stream");
+  console.log(stream);
   return stream;
 }
 
 async function subscribe() {
+  console.log(`subscribe`);
   const data = await socket.request("createConsumerTransport", {
     forceTcp: false,
   });
@@ -200,8 +222,12 @@ async function subscribe() {
     console.error(data.error);
     return;
   }
+  console.log(`data`);
+  console.log(data);
 
   const transport = device.createRecvTransport(data);
+  console.log(`transport`);
+  console.log(transport);
   transport.on("connect", ({ dtlsParameters }, callback, errback) => {
     socket
       .request("connectConsumerTransport", {
@@ -237,7 +263,14 @@ async function subscribe() {
     }
   });
 
-  const stream = consume(transport);
+  const stream = await consume(transport);
+  console.log(`stream`);
+  console.log(stream);
+
+  document.querySelector("#remote_video").srcObject = await stream;
+  await socket.request("resume");
+  $txtSubscription.innerHTML = "subscribed";
+  $fsSubscribe.disabled = true;
 }
 
 async function consume(transport) {

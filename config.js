@@ -1,9 +1,10 @@
 module.exports = {
   // listenIp: '0.0.0.0',
+  // listenIp: "34.81.234.72",
   listenIp: "127.0.0.1",
   listenPort: 3000,
-  sslCrt: "/etc/ssl/certs/ssl-cert-snakeoil.pem",
-  sslKey: "/etc/ssl/private/ssl-cert-snakeoil.key",
+  // sslCrt: "/etc/ssl/certs/ssl-cert-snakeoil.pem",
+  // sslKey: "/etc/ssl/private/ssl-cert-snakeoil.key",
   mediasoup: {
     // Worker settings
     worker: {
@@ -47,6 +48,7 @@ module.exports = {
     webRtcTransport: {
       listenIps: [
         {
+          // ip: "34.81.234.72",
           ip: "127.0.0.1",
           announcedIp: null,
         },
